@@ -1,0 +1,176 @@
+tmb基线流程
+
+1. 依赖的R包：
+	optparse
+	data.table
+	pROC
+	mgcv
+	ggpubr
+	survival
+	survminer
+2. 输入的文件内容至少有这几列：SampleID Chromosome Start End Ref Mut Mutation_type Function_region
+   如果没有 Function_region Mutation_type，需要注释。
+   注释例子：
+	# 取列名
+	  head -n 1  ./demo/Data_mutlist.txt > ./demo/header.txt
+	# 去掉列名
+	  less -S ./demo/Data_mutlist.txt | grep -v "Start" > ./demo/Data_mutlist.value.txt
+	# 根据chr pos 排序
+	  sort -k 2,2 -k 3,3n ./demo/Data_mutlist.value.txt > ./demo/Data_mutlist.value.sort.txt
+	# 加上列名
+	  cat ./demo/header.txt Data_mutlist.value.sort.txt > ./demo/Data_mutlist.value.sort.header.txt
+	# 注释 给出chrome,start,end,Ref,mut在第几列
+	  /usr/local/ANN/Annotation -p 2,3,4,5,6 -A -t -i ./demo/Data_mutlist.value.sort.header.txt  -o ./demo/Data_mutlist.value.sort.header.ann.txt
+3. 计算TMB：
+	Usage: TMB_Calcultate.R [options]
+
+
+	Options:
+        	-m MUT-FILE, --mut-file=MUT-FILE
+                	the mutation file
+
+	        -b BED-FILE, --bed-file=BED-FILE
+        	        the bed region
+
+	        -c CDS-FILE, --cds-file=CDS-FILE
+        	        the cds region
+
+	        -t MUTTYPE-FILE, --muttype-file=MUTTYPE-FILE
+        	        mutation type
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+
+	# 计算TMB例子：
+	Rscript TMB_Calcultate.R -m ./demo/Anno/Data_mutlist.value.sort.header.ann.txt -b ./demo/Anno/CDS.txt -c ./demo/Anno/CDS.txt -t ./demo/Anno/Data_mut_type.txt -s demo -o ./demo/TMB/
+
+4. 手动划分TMB基线(指定几分位划分)：
+
+	Usage: Manual_TMB_Baseline.R [options]
+
+
+	Options:
+        	-t TMB-FILE, --tmb-file=TMB-FILE
+                	the sample tmb file
+
+	        -n CUT-NUM, --cut-num=CUT-NUM
+        	        the cut num
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+        # 手动划分TMB基线例子：
+        Rscript TMB_Calcultate.R -m ./demo/Anno/Data_mutlist.value.sort.header.ann.txt -b ./demo/Anno/CDS.txt -c ./demo/Anno/CDS.txt -t ./demo/Anno/Data_mut_type.txt -s demo -o ./demo/TMB/
+	Rscript Manual_TMB_Baseline.R -t ./demo/TMB/demo.muttype1.txt -n 2 -s demo.mutype1.ManualBaseline -o ./demo/Manual_TMB_Baseline/
+
+5.1 自动划分TMB基线(ROC方法)：
+
+	Usage: Auto_ROC_TMB_Baseline.R [options]
+
+
+	Options:
+        	-t TMB-FILE, --tmb-file=TMB-FILE
+                	the sample tmb file
+
+	        -r RESPONSE-FILE, --response-file=RESPONSE-FILE
+        	        the response file
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+	# 自动划分TMB基线例子：
+	Rscript Auto_ROC_TMB_Baseline.R -t ./demo/TMB/demo.muttype1.txt -r ./demo/Clinical_Data/Data_clinical.txt -s demo.mutype1.ROCBaseline -o ./demo/ROC_Baseline/
+
+5.2 自动划分TMB基线(Region)：
+
+	Usage: Auto_Region_TMB_Baseline.R [options]
+
+
+	Options:
+        	-t TMB-FILE, --tmb-file=TMB-FILE
+                	the sample tmb file
+
+	        -r RESPONSE-FILE, --response-file=RESPONSE-FILE
+        	        the response file
+
+	        -b START-END, --start-end=START-END
+        	        the region for start end,eg:50,55
+
+	        -l STEP-LENGTH, --step-length=STEP-LENGTH
+        	        increment of the sequence,eg:1
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+	 # 自动划分TMB基线例子：
+         Rscript Auto_Region_TMB_Baseline.R -t ./demo/TMB/demo.muttype1.txt -r ./demo/Clinical_Data/Data_clinical.txt -b 3,10 -l 1 -s demo.mutype1.RegionBaseline -o ./demo/Region_Baseline/
+
+5.3 自动划分TMB基线(GAM)：
+
+	Usage: Auto_GAM_TMB_Distribution.R [options]
+
+
+	Options:
+        	-t TMB-FILE, --tmb-file=TMB-FILE
+                	the sample tmb file
+
+	        -r RESPONSE-FILE, --response-file=RESPONSE-FILE
+        	        the response file
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+
+	# 自动划分TMB基线例子：
+        Rscript Auto_GAM_TMB_Distribution.R -t ./demo/TMB/demo.muttype1.txt -r ./demo/Clinical_Data/Data_clinical.txt -s demo.mutype1.GAMBaseline -o ./demo/GAM_Baseline/
+6  survive:
+
+	Usage: Survive_TMB.R [options]
+
+
+	Options:
+        	-t TMBSTATE-FILE, --tmbState-file=TMBSTATE-FILE
+                	the sample tmb file, the file need have 4 columns(SampleID TMB TMB_Scope TMB_State)
+
+	        -r RESPONSE-FILE, --response-file=RESPONSE-FILE
+        	        the response file
+
+	        -s SAMPLE-NAME, --sample-name=SAMPLE-NAME
+        	        sample name
+
+	        -o OUTPUT-DIR, --output-dir=OUTPUT-DIR
+        	        the output dir, use to save the result
+
+	        -h, --help
+        	        Show this help message and exit
+
+	# 生存曲线例子：
+
+	Rscript Survive_TMB.R -t ./demo/Manual_TMB_Baseline/demo.mutype1.ManualBaseline.CutNum.2.txt -r ./demo/Clinical_Data/Data_clinical.txt -s demo.mutype1 -o ./demo/survive/
+

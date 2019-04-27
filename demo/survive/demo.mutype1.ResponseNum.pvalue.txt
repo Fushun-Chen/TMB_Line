@@ -1,0 +1,3 @@
+Response	NoResponse	pvalue
+High	9	23	0.389433957719529
+Low	6	27	0.389433957719529

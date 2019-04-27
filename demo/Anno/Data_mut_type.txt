@@ -1,0 +1,2 @@
+nonsynonymous SNV,stopgain,stoploss
+nonsynonymous SNV,stopgain
